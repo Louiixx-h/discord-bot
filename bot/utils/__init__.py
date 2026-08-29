@@ -1,0 +1,1 @@
+"""Utilitários compartilhados pelas Cogs."""

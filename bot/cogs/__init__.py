@@ -1,0 +1,1 @@
+"""Extensões funcionais do bot."""

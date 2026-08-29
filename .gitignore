@@ -1,0 +1,26 @@
+# Segredos e configurações locais
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+**/__pycache__/
+**pycache**/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Estado de execução e logs
+.state/
+logs/
+*.log
+
+# Ferramentas e sistema operacional
+.pytest_cache/
+.mypy_cache/
+.coverage
+.DS_Store
+Thumbs.db
