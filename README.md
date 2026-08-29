@@ -49,7 +49,9 @@ publica uma piada diária em um horário e timezone configuráveis.
 │   ├── test_jokes.py
 │   └── test_social.py
 ├── .env.example
+├── .dockerignore
 ├── .gitignore
+├── Dockerfile
 ├── requirements.txt
 └── README.md
 ```
@@ -274,6 +276,54 @@ registrada e a tarefa tentará novamente no próximo horário sem encerrar o bot
 - tratamento de canal ausente, tipo incorreto, falta de permissão e erros HTTP;
 - mensagens de erro para usuários são genéricas; logs não incluem conteúdo privado;
 - dependências diretas conhecidas e fixadas no `requirements.txt`.
+
+## Deploy no Northflank com Docker
+
+O projeto inclui um `Dockerfile` baseado na imagem oficial
+`python:3.12.14-slim-bookworm`. A imagem instala apenas as dependências de
+produção, não inclui o `.env` e executa o bot como um usuário sem privilégios.
+
+Antes do deploy, envie o projeto para um repositório Git que o Northflank possa
+acessar. Depois:
+
+1. crie um projeto no Northflank;
+2. crie um **Combined Service**;
+3. selecione o repositório e a branch do bot;
+4. escolha **Dockerfile** como método de build;
+5. informe `/Dockerfile` como caminho e `/` como contexto de build;
+6. não configure porta pública nem health check HTTP;
+7. mantenha exatamente **1 instance/replica** e desative autoscaling;
+8. cadastre as variáveis abaixo em **Runtime environment**;
+9. faça o deploy e confira nos logs se as Cogs e os comandos foram sincronizados.
+
+Variáveis mínimas de runtime:
+
+```dotenv
+DISCORD_TOKEN=seu_token_no_painel_do_northflank
+WELCOME_CHANNEL_ID=id_do_canal
+GENERAL_CHANNEL_ID=id_do_canal
+TIMEZONE=America/Sao_Paulo
+DAILY_JOKE_TIME=12:00
+JOKE_STATE_FILE=/app/.state/joke_state.json
+LOG_LEVEL=INFO
+```
+
+Também configure `DEV_GUILD_ID` para sincronização imediata em um servidor de
+testes e, opcionalmente, `GUILD_ID` para restringir o bot a um servidor. Salve o
+token diretamente nas variáveis protegidas do Northflank: nunca envie o `.env`
+para o Git ou use o token como build argument.
+
+O diretório `/app/.state` é gravável, mas o armazenamento padrão do container é
+efêmero. Para preservar a data e o índice da última piada entre novos deployments,
+monte um volume persistente em `/app/.state`. Sem volume, o bot continua
+funcionando, mas pode perder esse pequeno histórico quando o container for recriado.
+
+Teste a imagem localmente, sem gravar o token nela:
+
+```bash
+docker build --tag discord-friends-bot .
+docker run --rm --env-file .env discord-friends-bot
+```
 
 ## Manutenção e hospedagem futura
 
